@@ -1,0 +1,41 @@
+.color-preview {
+  transition: background-color 0.3s ease-out;
+  margin: -1px 0;
+}
+
+.harmony-container {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.harmony-container.hidden {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+.harmony-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.color-preview {
+  transition: background-color 0.3s ease-out;
+  margin: -1px 0;
+}
+
+.color-preview .flex-1 {
+  margin: -0.5px 0;
+}
+
+.color-square {
+  transition: transform 0.2s ease-out;
+}
+
+.color-square {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.color-square:hover {
+  transform: scale(1.05);
+}
+
