@@ -1,6 +1,6 @@
 const fs = require('fs');
 const xml2js = require('xml2js');
-const { ColorConverter, ColorDescriptor, ColorHarmony } = require('./util.js');
+const { ColorConverter } = require('./util.js');
 
 function postProcessTruckColors(truckColors, truckNames) {
   return truckColors.map((entry) => {
@@ -68,33 +68,15 @@ fs.readFile('./presets/original.xml', 'utf-8', (err, data) => {
     let truckColors = Array.from(colorMap.values());
     truckColors = postProcessTruckColors(truckColors, truckNames);
 
-    const writeFile = (filename, varname, collection) => {
-      fs.writeFileSync(`./output/${filename}`, `const ${varname} = ${JSON.stringify(collection, null, 2)};`);
-    }
-
-    writeFile('truck-names.js', 'truckNames', truckNames);
-    writeFile('truck-colors.js', 'truckColors', truckColors);
+    fs.writeFileSync('../src/data/truck-names.json', JSON.stringify(truckNames, null, 2));
+    fs.writeFileSync('../public/data/truck-colors.json', JSON.stringify(truckColors));
   });
 });
 
 function processColor(snowRunnerColor) {
   const rgb = ColorConverter.snowRunnerToRgb(snowRunnerColor);
   const hsb = ColorConverter.rgbStringToHsb(snowRunnerColor);
-
-  return {
-    description: ColorDescriptor.describe(hsb.hue, hsb.saturation, hsb.brightness),
-    snowrunner: snowRunnerColor,
-    rgb: ColorConverter.rgbToString(...rgb),
-    hex: rgbToHex(...rgb),
-    hsb: hsb,
-    harmonies: {
-      analogous: ColorHarmony.analogous(hsb.hue, hsb.saturation, hsb.brightness),
-      triadic: ColorHarmony.triadic(hsb.hue, hsb.saturation, hsb.brightness),
-      complementary: ColorHarmony.complementary(hsb.hue, hsb.saturation, hsb.brightness),
-      splitComplementary: ColorHarmony.splitComplementary(hsb.hue, hsb.saturation, hsb.brightness),
-      square: ColorHarmony.square(hsb.hue, hsb.saturation, hsb.brightness)
-    }
-  };
+  return { hex: rgbToHex(...rgb), hsb };
 }
 
 const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => {
