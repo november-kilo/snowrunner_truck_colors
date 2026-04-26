@@ -54,7 +54,6 @@
     );
   }
 
-  // ── ColorSwatch ───────────────────────────────────────────
   function ColorSwatch({ hsb, onClick }) {
     const css = hsbToCss(hsb.hue, hsb.saturation, hsb.brightness);
     return (
@@ -89,7 +88,6 @@
     </Box>);
   }
 
-  // ── HarmoniesPanel ────────────────────────────────────────
   function HarmoniesPanel({ hue, saturation, brightness, onSwatchClick }) {
     const harmonies = React.useMemo(() => [
       { label: 'Analogous',           colors: ColorHarmony.analogous(hue, saturation, brightness) },
@@ -132,7 +130,6 @@
     </Box>);
   }
 
-  // ── ColorSliders ──────────────────────────────────────────
   function ColorSliders({ label, color, onChange, isActive, onActivate, onContextMenu }) {
     const css = hsbToCss(color.hue, color.saturation, color.brightness);
     const [r, g, b] = ColorConverter.hsbToRgb(color.hue, color.saturation, color.brightness);
@@ -197,7 +194,6 @@
     </Grid>);
   }
 
-  // ── ColorEditor ───────────────────────────────────────────
   function ColorEditor({ colors, onChange, addToast }) {
     const [activeColor, setActiveColor] = React.useState(0);
     const [contextMenu, setContextMenu] = React.useState(null);
@@ -298,7 +294,6 @@
     );
   }
 
-  // ── ColorCard (explorer grid item) ────────────────────────
   function ColorCard({ scheme, onLoad }) {
     const colorValues = Object.values(scheme.colors);
     return (
@@ -318,7 +313,6 @@
     );
   }
 
-  // ── ColorExplorer ─────────────────────────────────────────
   function ColorExplorer({ onLoadColors }) {
     const [filter, setFilter] = React.useState('');
     const [selectedTruck, setSelectedTruck] = React.useState('');
@@ -380,7 +374,6 @@
     );
   }
 
-  // ── ColorConverterTab ─────────────────────────────────────
   function ColorConverterTab({ addToast }) {
     const [hex, setHex] = React.useState('');
     const [result, setResult] = React.useState(null);
@@ -442,7 +435,6 @@
     );
   }
 
-  // ── App ───────────────────────────────────────────────────
   function App() {
     const [tab, setTab] = React.useState(0);
     const [editorColors, setEditorColors] = React.useState([

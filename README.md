@@ -30,3 +30,6 @@ The "Reset Colors" tab resets to the default cyan color of the in-game
 color editor.
 
 Selecting the explorer tab will take you back to where you left off.
+
+Added the "Color Converter" tab,
+which turns hex colors into SnowRunner colors.
