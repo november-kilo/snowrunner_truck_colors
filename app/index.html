@@ -330,10 +330,10 @@
           const key = Object.values(s.colors).map((c) => c.hex).sort().join('|');
           if (!seen.has(key)) seen.set(key, s);
         });
-        return categorizeColorSchemes(Array.from(seen.values()), true);
+        return ColorUtil.categorizeSchemes(Array.from(seen.values()), true);
       }
       const schemes = truckColors.filter((s) => s.trucks.includes(selectedTruck) || s.trucks.includes('All'));
-      return categorizeColorSchemes(schemes, true);
+      return ColorUtil.categorizeSchemes(schemes, true);
     }, [selectedTruck]);
 
     return (

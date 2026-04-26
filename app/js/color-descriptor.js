@@ -21,7 +21,7 @@ const COLOR_RANGES = [
 
 const isGrayscale = (saturation) => saturation < THRESHOLDS.grayscaleSaturation;
 
-const getGrayscaleName = brightness => {
+const getGrayscaleName = (brightness) => {
   const shades = [
     { threshold: 15,  name: 'black'      },
     { threshold: 35,  name: 'dark gray'  },
@@ -89,5 +89,5 @@ const ColorDescriptor = {
     }
 
     return `${getModifier(s, b)}${getBaseColorName(h)}`.trim();
-  },
+  }
 };

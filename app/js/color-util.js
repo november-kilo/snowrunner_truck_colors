@@ -7,7 +7,11 @@ const getSchemePairs = (colors, requireAdjacency) => {
 };
 
 const classifyEquality = (matched, total) =>
-  matched === total ? 'allEqual' : matched > 0 ? 'someEqual' : 'noneEqual';
+  matched === total
+    ? 'allEqual'
+    : matched > 0
+      ? 'someEqual'
+      : 'noneEqual';
 
 const classifyScheme = (scheme, requireAdjacency) => {
   const pairs = getSchemePairs(Object.values(scheme.colors), requireAdjacency);
@@ -16,10 +20,12 @@ const classifyScheme = (scheme, requireAdjacency) => {
   return classifyEquality(matched, pairs.length);
 };
 
-function categorizeColorSchemes(colorSchemes, requireAdjacency = false) {
-  const groups = { allEqual: [], someEqual: [], noneEqual: [] };
+const ColorUtil = {
+  categorizeSchemes(colorSchemes, requireAdjacency = false) {
+    const groups = { allEqual: [], someEqual: [], noneEqual: [] };
 
-  colorSchemes.forEach((scheme) => groups[classifyScheme(scheme, requireAdjacency)].push(scheme));
+    colorSchemes.forEach((scheme) => groups[classifyScheme(scheme, requireAdjacency)].push(scheme));
 
-  return [...groups.allEqual, ...groups.someEqual, ...groups.noneEqual];
-}
+    return [...groups.allEqual, ...groups.someEqual, ...groups.noneEqual];
+  }
+};
