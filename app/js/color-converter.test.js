@@ -24,6 +24,18 @@ QUnit.module('ColorConverter', () => {
       );
     });
 
+    QUnit.test('rounds saturation to nearest integer', (assert) => {
+      assert.equal(ColorConverter.normalizeHSB(0, 50.4, 0).saturation, 50, 'saturation rounded to nearest integer');
+      assert.equal(ColorConverter.normalizeHSB(0, 50.5, 0).saturation, 51, 'saturation rounded to nearest integer');
+      assert.equal(ColorConverter.normalizeHSB(0, 50.6, 0).saturation, 51, 'saturation rounded to nearest integer');
+    });
+
+    QUnit.test('rounds brightness to nearest integer', (assert) => {
+      assert.equal(ColorConverter.normalizeHSB(0, 0, 50.4).brightness, 50, 'brightness rounded to nearest integer');
+      assert.equal(ColorConverter.normalizeHSB(0, 0, 50.5).brightness, 51, 'brightness rounded to nearest integer');
+      assert.equal(ColorConverter.normalizeHSB(0, 0, 50.6).brightness, 51, 'brightness rounded to nearest integer');
+    });
+
     QUnit.test('clamps saturation above 100', (assert) => {
       assert.equal(ColorConverter.normalizeHSB(0, 150, 50).saturation, 100, 'saturation > 100 clamped to 100');
     });

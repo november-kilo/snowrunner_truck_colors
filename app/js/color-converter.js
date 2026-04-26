@@ -1,9 +1,11 @@
 const ColorConverter = {
   normalizeHSB(h, s, b) {
+    const clamp = (value) => Math.min(100, Math.max(0, Math.round(value)));
+
     return {
       hue: ((h % 360) + 360) % 360,
-      saturation: Math.min(100, Math.max(0, s)),
-      brightness: Math.min(100, Math.max(0, b))
+      saturation: clamp(s),
+      brightness: clamp(b)
     };
   },
 
