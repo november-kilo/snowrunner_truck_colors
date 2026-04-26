@@ -4,6 +4,9 @@ This is mashup of a few projects over the span of a few years,
 and which haven't been fully unified yet,
 but it's complete.
 
+The `reactjs` branch contains a ReactJS version of the app,
+which will eventually become the default.
+
 ## Parser
 
 The `./parser/` directory contains a NodeJS app to parse the game file
