@@ -4,347 +4,502 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SnowRunner Color Tool</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+
   <script src="./js/constants.js"></script>
-  <script src="./js/dom.js"></script>
-  <script src="./js/explorer.js"></script>
-  <script src="./js/editor.js"></script>
-  <script src="./js/contextmenu.js"></script>
-  <script src="./js/color-descriptor.js"></script>
+  <script src="./js/clipboard.js"></script>
   <script src="./js/color-converter.js"></script>
+  <script src="./js/color-descriptor.js"></script>
   <script src="./js/color-harmony.js"></script>
-  <script src="./js/toast.js"></script>
-  <script src="./js/tab.js"></script>
+  <script src="./js/color-util.js"></script>
   <script src="./js/truck-names.js"></script>
   <script src="./js/truck-colors.js"></script>
-  <script src="./js/color-util.js"></script>
-  <link rel="stylesheet" href="./css/color-harmony.css">
-  <link rel="stylesheet" href="./css/tab.css">
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@emotion/react@11/dist/emotion-react.umd.min.js"></script>
+  <script src="https://unpkg.com/@emotion/styled@11/dist/emotion-styled.umd.min.js"></script>
+  <script src="https://unpkg.com/@mui/material@5/umd/material-ui.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
-<div id="contextMenu" class="hidden fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-48">
-  <button id="copyHSB" class="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-2">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
-    </svg>
-    Copy HSB Values
-  </button>
-  <button id="pasteHSB" class="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-2">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-    </svg>
-    Paste HSB Values
-  </button>
-</div>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+  const {
+    Box, Container, Grid, Stack, Paper,
+    Tabs, Tab, AppBar, Toolbar,
+    TextField, Slider, Button,
+    Select, MenuItem, FormControl, InputLabel,
+    Alert, Menu,
+    Typography,
+    CssBaseline, ThemeProvider, createTheme,
+  } = MaterialUI;
 
-<div class="max-w-7xl mx-auto">
-  <div class="flex border-b border-gray-200 mb-6">
-    <button class="px-4 py-2 -mb-px font-medium text-sm tab-button active" data-tab="explorer">
-      Color Explorer
-    </button>
-    <button class="px-4 py-2 -mb-px font-medium text-sm tab-button" data-tab="editor">
-      Color Editor
-    </button>
-  </div>
+  const theme = createTheme();
 
-  <div class="mt-4">
-    <div id="explorer" class="tab-content">
-      <div class="max-w-2xl mx-auto space-y-8 mb-8">
-        <div class="bg-white rounded-lg shadow p-4 space-y-4">
-          <div>
-            <label for="truckFilter" class="block text-sm font-medium text-gray-700 mb-1">
-              Filter Trucks
-            </label>
-            <input type="text"
-                   id="truckFilter"
-                   name="truckFilter"
-                   placeholder="Truck name or part of name..."
-                   class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-          <div>
-            <label for="truckSelect" class="block text-sm font-medium text-gray-700 mb-1">
-              Select Truck
-            </label>
-            <select id="truckSelect"
-                    name="truckSelect"
-                    class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Select a truck</option>
-            </select>
-          </div>
-        </div>
-      </div>
+  function hsbToCss(hue, saturation, brightness) {
+    const [r, g, b] = ColorConverter.hsbToRgb(hue, saturation, brightness);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
 
-      <div id="colorGrid" class="max-w-7xl mx-auto grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 gap-4">
-        <!-- Grid items will be populated by JavaScript -->
-      </div>
-    </div>
+  function HSBSwatchValues({hsb}) {
+    return (
+      <>
+        <div>H: {Math.round(hsb.hue)}°</div>
+        <div>S: {Math.round(hsb.saturation)}%</div>
+        <div>B: {Math.round(hsb.brightness)}%</div>
+      </>
+    );
+  }
 
-    <div id="editor" class="tab-content hidden">
-      <div class="bg-white p-6 rounded-lg shadow-md">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- Color 1 -->
-          <div class="space-y-4">
-            <h3 class="font-bold text-lg">Primary Color</h3>
-            <div id="colorDisplay1" class="h-24 rounded-lg"></div>
-            <div id="colorDesc1" class="text-sm text-gray-600"></div>
-            <div id="sr-c1-rgb" class="text-sm text-gray-600"></div>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Hue</label>
-                <input type="range" id="hue1" min="0" max="360" value="180" class="w-full">
-                <input type="number" id="hueInput1" min="0" max="360" value="180" class="mt-1 w-20 rounded">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Saturation</label>
-                <input type="range" id="saturation1" min="0" max="100" value="50" class="w-full">
-                <input type="number" id="saturationInput1" min="0" max="100" value="50" class="mt-1 w-20 rounded">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Brightness</label>
-                <input type="range" id="brightness1" min="0" max="100" value="50" class="w-full">
-                <input type="number" id="brightnessInput1" min="0" max="100" value="50" class="mt-1 w-20 rounded">
-              </div>
-            </div>
-          </div>
+  // ── ColorSwatch ───────────────────────────────────────────
+  function ColorSwatch({ hsb, onClick }) {
+    const css = hsbToCss(hsb.hue, hsb.saturation, hsb.brightness);
+    return (
+      <Box
+        onClick={onClick}
+        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: onClick ? 'pointer' : 'default' }}
+      >
+        <Box
+          title={ColorDescriptor.describe(hsb.hue, hsb.saturation, hsb.brightness)}
+          sx={{
+            width: 64, height: 64, borderRadius: 1, mb: 0.5,
+            backgroundColor: css,
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            ...(onClick && { '&:hover': { transform: 'scale(1.08)', boxShadow: 3 } }),
+          }}
+        />
+        <Typography variant="caption" color="text.secondary" component="div" textAlign="center">
+          <HSBSwatchValues hsb={ hsb } />
+        </Typography>
+      </Box>
+    );
+  }
 
-          <!-- Color 2 -->
-          <div class="space-y-4">
-            <h3 class="font-bold text-lg">Secondary Color</h3>
-            <div id="colorDisplay2" class="h-24 rounded-lg"></div>
-            <div id="colorDesc2" class="text-sm text-gray-600"></div>
-            <div id="sr-c2-rgb" class="text-sm text-gray-600"></div>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Hue</label>
-                <input type="range" id="hue2" min="0" max="360" value="180" class="w-full">
-                <input type="number" id="hueInput2" min="0" max="360" value="180" class="mt-1 w-20 rounded">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Saturation</label>
-                <input type="range" id="saturation2" min="0" max="100" value="50" class="w-full">
-                <input type="number" id="saturationInput2" min="0" max="100" value="50" class="mt-1 w-20 rounded">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Brightness</label>
-                <input type="range" id="brightness2" min="0" max="100" value="50" class="w-full">
-                <input type="number" id="brightnessInput2" min="0" max="100" value="50" class="mt-1 w-20 rounded">
-              </div>
-            </div>
-          </div>
+  function HarmoniesBox({label, colors, onSwatchClick}) {
+    return (<Box key={label}>
+      <Typography variant="subtitle1" fontWeight={600} gutterBottom>{label}</Typography>
+      <Box sx={{display: 'flex', gap: 2, flexWrap: 'wrap'}}>
+        {colors.map((hsb, i) => (
+          <ColorSwatch key={i} hsb={hsb} onClick={onSwatchClick ? () => onSwatchClick(hsb) : null}/>
+        ))}
+      </Box>
+    </Box>);
+  }
 
-          <!-- Color 3 -->
-          <div class="space-y-4">
-            <h3 class="font-bold text-lg">Tertiary Color</h3>
-            <div id="colorDisplay3" class="h-24 rounded-lg"></div>
-            <div id="colorDesc3" class="text-sm text-gray-600"></div>
-            <div id="sr-c3-rgb" class="text-sm text-gray-600"></div>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Hue</label>
-                <input type="range" id="hue3" min="0" max="360" value="180" class="w-full">
-                <input type="number" id="hueInput3" min="0" max="360" value="180" class="mt-1 w-20 rounded">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Saturation</label>
-                <input type="range" id="saturation3" min="0" max="100" value="50" class="w-full">
-                <input type="number" id="saturationInput3" min="0" max="100" value="50" class="mt-1 w-20 rounded">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Brightness</label>
-                <input type="range" id="brightness3" min="0" max="100" value="50" class="w-full">
-                <input type="number" id="brightnessInput3" min="0" max="100" value="50" class="mt-1 w-20 rounded">
-              </div>
-            </div>
-          </div>
-        </div>
+  // ── HarmoniesPanel ────────────────────────────────────────
+  function HarmoniesPanel({ hue, saturation, brightness, onSwatchClick }) {
+    const harmonies = React.useMemo(() => [
+      { label: 'Analogous',           colors: ColorHarmony.analogous(hue, saturation, brightness) },
+      { label: 'Triadic',             colors: ColorHarmony.triadic(hue, saturation, brightness) },
+      { label: 'Complementary',       colors: ColorHarmony.complementary(hue, saturation, brightness) },
+      { label: 'Split Complementary', colors: ColorHarmony.splitComplementary(hue, saturation, brightness) },
+      { label: 'Square',              colors: ColorHarmony.square(hue, saturation, brightness) },
+    ], [hue, saturation, brightness]);
 
-        <div class="mt-6 flex justify-center">
-          <div class="mt-6 h-[100px] w-[100px] rounded-lg overflow-hidden flex flex-col">
-            <div class="h-1/3" id="stackedColor1"></div>
-            <div class="h-1/3" id="stackedColor2"></div>
-            <div class="h-1/3" id="stackedColor3"></div>
-          </div>
-        </div>
+    return (
+      <Stack spacing={3}>
+        {harmonies.map(({ label, colors }) => <HarmoniesBox
+          key={ label }
+          label={ label }
+          colors={ colors }
+          onSwatchClick={ onSwatchClick }
+          />)}
+      </Stack>
+    );
+  }
 
-        <div class="mt-6">
-          <button id="resetButton" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-            Reset Colors
-          </button>
-        </div>
-      </div>
+  function ColorControlBox({label, controlKey, min, max, color, onChange}) {
+    return (<Box key={controlKey}>
+      <Typography variant="body2" color="text.secondary">{label}</Typography>
+      <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+        <Slider
+          min={min} max={max} value={color[controlKey]} size="small"
+          onChange={(_, val) => onChange({...color, [controlKey]: val})}
+          sx={{flex: 1}}
+        />
+        <TextField
+          type="number"
+          value={color[controlKey]}
+          onChange={e => onChange({...color, [controlKey]: Math.min(max, Math.max(min, Number(e.target.value)))})}
+          inputProps={{min, max}}
+          size="small"
+          sx={{width: 72}}
+        />
+      </Box>
+    </Box>);
+  }
 
-      <!-- Harmonies Section -->
-      <div class="bg-white p-6 rounded-lg shadow-md">
-        <div class="flex items-center gap-2 mb-4">
-          <h3 class="font-bold text-lg">Color Harmonies</h3>
-          <span id="editor-selectedColorType" class="text-sm text-gray-600">(Primary Color)</span>
-        </div>
+  // ── ColorSliders ──────────────────────────────────────────
+  function ColorSliders({ label, color, onChange, isActive, onActivate, onContextMenu }) {
+    const css = hsbToCss(color.hue, color.saturation, color.brightness);
+    const [r, g, b] = ColorConverter.hsbToRgb(color.hue, color.saturation, color.brightness);
+    const controls = [
+      { label: 'Hue',        key: 'hue',        min: 0, max: 360 },
+      { label: 'Saturation', key: 'saturation', min: 0, max: 100 },
+      { label: 'Brightness', key: 'brightness', min: 0, max: 100 },
+    ];
+    return (
+      <Stack spacing={2}>
+        <Typography variant="h6">{label}</Typography>
+        <Box
+          sx={{
+            height: 96, borderRadius: 1, backgroundColor: css, cursor: 'pointer',
+            boxShadow: isActive ? '0 0 0 3px #1976d2' : 'none',
+            transition: 'box-shadow 0.15s',
+          }}
+          onClick={onActivate}
+          onContextMenu={onContextMenu}
+        />
+        <Typography variant="caption" color="text.secondary">
+          {ColorDescriptor.describe(color.hue, color.saturation, color.brightness)}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {ColorConverter.snowRunnerFormat(r, g, b)}
+        </Typography>
+        {controls.map(({ label, key, min, max }) => (<ColorControlBox
+          key={ key }
+          controlKey={ key }
+          label={ label }
+          min={ min }
+          max={ max }
+          color={ color }
+          onChange={ onChange }
+          />)
+        )}
+      </Stack>
+    );
+  }
 
-        <!-- Harmonies container 1 -->
-        <div id="harmonies1" class="space-y-8">
-          <div id="analogousHarmonies1" class="space-y-4">
-            <h4 class="font-semibold">Analogous</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+  function ColorSlidersGrid({colors, labels, onChange, activeColor, setActiveColor, setContextMenu}) {
+    return (<Grid container spacing={3}>
+      {colors.map((color, idx) => (
+        <Grid item xs={12} md={4} key={idx}>
+          <ColorSliders
+            label={labels[idx]}
+            color={color}
+            onChange={updated => {
+              const next = [...colors];
+              next[idx] = updated;
+              onChange(next);
+            }}
+            isActive={activeColor === idx}
+            onActivate={() => setActiveColor(idx)}
+            onContextMenu={e => {
+              e.preventDefault();
+              setContextMenu({x: e.clientX, y: e.clientY, colorIdx: idx});
+            }}
+          />
+        </Grid>
+      ))}
+    </Grid>);
+  }
 
-          <div id="triadicHarmonies1" class="space-y-4">
-            <h4 class="font-semibold">Triadic</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+  // ── ColorEditor ───────────────────────────────────────────
+  function ColorEditor({ colors, onChange, addToast }) {
+    const [activeColor, setActiveColor] = React.useState(0);
+    const [contextMenu, setContextMenu] = React.useState(null);
 
-          <div id="complementaryHarmonies1" class="space-y-4">
-            <h4 class="font-semibold">Complementary</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+    const labels = ['Primary Color', 'Secondary Color', 'Tertiary Color'];
 
-          <div id="splitComplementaryHarmonies1" class="space-y-4">
-            <h4 class="font-semibold">Split Complementary</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+    const handleCopy = async () => {
+      const c = colors[contextMenu.colorIdx];
+      setContextMenu(null);
+      await HsbClipboard.copy(c);
+      addToast(Constants.hsbCopied, 'success');
+    };
 
-          <div id="squareHarmonies1" class="space-y-4">
-            <h4 class="font-semibold">Square</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
-        </div>
+    const handlePaste = async () => {
+      const idx = contextMenu.colorIdx;
+      setContextMenu(null);
+      try {
+        const hsb = await HsbClipboard.paste();
+        const updated = [...colors];
+        updated[idx] = { hue: hsb.hue, saturation: hsb.saturation, brightness: hsb.brightness };
+        onChange(updated);
+        addToast(Constants.hsbPasted, 'success');
+      } catch (err) {
+        addToast(`${Constants.hsbPastedError}: ${err.message}`, 'error');
+      }
+    };
 
-        <!-- Harmonies container 2 -->
-        <div id="harmonies2" class="space-y-8 hidden">
-          <div id="analogousHarmonies2" class="space-y-4">
-            <h4 class="font-semibold">Analogous</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+    return (
+      <Box>
+        <Paper sx={{p: 3, mb: 2}}>
+          <ColorSlidersGrid
+            colors={ colors }
+          labels={ labels }
+          onChange={ onChange }
+          activeColor={ activeColor }
+          setActiveColor={ setActiveColor }
+          setContextMenu={ setContextMenu }
+          />
 
-          <div id="triadicHarmonies2" class="space-y-4">
-            <h4 class="font-semibold">Triadic</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+          <Box sx={{display: 'flex', justifyContent: 'center', mt: 3}}>
+            <Box sx={{
+              width: 100,
+              height: 100,
+              borderRadius: 1,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              {colors.map((c, i) => (
+                <Box key={i} sx={{flex: 1, backgroundColor: hsbToCss(c.hue, c.saturation, c.brightness)}}/>
+              ))}
+            </Box>
+          </Box>
 
-          <div id="complementaryHarmonies2" class="space-y-4">
-            <h4 class="font-semibold">Complementary</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+          <Box sx={{mt: 2}}>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setActiveColor(0);
+                onChange([
+                  {hue: 180, saturation: 50, brightness: 50},
+                  {hue: 180, saturation: 50, brightness: 50},
+                  {hue: 180, saturation: 50, brightness: 50},
+                ]);
+              }}
+            >
+              Reset Colors
+            </Button>
+          </Box>
+        </Paper>
 
-          <div id="splitComplementaryHarmonies2" class="space-y-4">
-            <h4 class="font-semibold">Split Complementary</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+        <Paper sx={{p: 3}}>
+          <Box sx={{display: 'flex', alignItems: 'baseline', gap: 1, mb: 2}}>
+            <Typography variant="h6">Color Harmonies</Typography>
+            <Typography variant="body2" color="text.secondary">({labels[activeColor]})</Typography>
+          </Box>
+          <HarmoniesPanel
+            hue={colors[activeColor].hue}
+            saturation={colors[activeColor].saturation}
+            brightness={colors[activeColor].brightness}
+            onSwatchClick={async hsb => {
+              await HsbClipboard.copy(hsb);
+              addToast(Constants.hsbCopied, 'success');
+            }}
+          />
+        </Paper>
 
-          <div id="squareHarmonies2" class="space-y-4">
-            <h4 class="font-semibold">Square</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
-        </div>
+        <Menu
+          open={Boolean(contextMenu)}
+          onClose={() => setContextMenu(null)}
+          anchorReference="anchorPosition"
+          anchorPosition={contextMenu ? {top: contextMenu.y, left: contextMenu.x} : undefined}
+        >
+          <MenuItem onClick={handleCopy}>Copy HSB Values</MenuItem>
+          <MenuItem onClick={handlePaste}>Paste HSB Values</MenuItem>
+        </Menu>
+      </Box>
+    );
+  }
 
-        <!-- Harmonies container 3 -->
-        <div id="harmonies3" class="space-y-8 hidden">
-          <div id="analogousHarmonies3" class="space-y-4">
-            <h4 class="font-semibold">Analogous</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+  // ── ColorCard (explorer grid item) ────────────────────────
+  function ColorCard({ scheme, onLoad }) {
+    const colorValues = Object.values(scheme.colors);
+    return (
+      <Box
+        onClick={() => onLoad(scheme)}
+        sx={{
+          borderRadius: 1, overflow: 'hidden', cursor: 'pointer',
+          height: 96, display: 'flex', flexDirection: 'column',
+          transition: 'transform 0.2s, box-shadow 0.2s',
+          '&:hover': { transform: 'scale(1.05)', boxShadow: 4 },
+        }}
+      >
+        {colorValues.map((color, i) => (
+          <Box key={i} sx={{ flex: 1, backgroundColor: color.hex }} />
+        ))}
+      </Box>
+    );
+  }
 
-          <div id="triadicHarmonies3" class="space-y-4">
-            <h4 class="font-semibold">Triadic</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+  // ── ColorExplorer ─────────────────────────────────────────
+  function ColorExplorer({ onLoadColors }) {
+    const [filter, setFilter] = React.useState('');
+    const [selectedTruck, setSelectedTruck] = React.useState('');
 
-          <div id="complementaryHarmonies3" class="space-y-4">
-            <h4 class="font-semibold">Complementary</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+    const filteredTrucks = React.useMemo(() =>
+        truckNames.filter(n => n.toLowerCase().includes(filter.toLowerCase())),
+      [filter]
+    );
 
-          <div id="splitComplementaryHarmonies3" class="space-y-4">
-            <h4 class="font-semibold">Split Complementary</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+    const colorSchemes = React.useMemo(() => {
+      if (!selectedTruck) return [];
+      if (selectedTruck === 'ALL') {
+        const seen = new Map();
+        truckColors.forEach(s => {
+          const key = Object.values(s.colors).map(c => c.hex).sort().join('|');
+          if (!seen.has(key)) seen.set(key, s);
+        });
+        return categorizeColorSchemes(Array.from(seen.values()), true);
+      }
+      const schemes = truckColors.filter(s => s.trucks.includes(selectedTruck) || s.trucks.includes('All'));
+      return categorizeColorSchemes(schemes, true);
+    }, [selectedTruck]);
 
-          <div id="squareHarmonies3" class="space-y-4">
-            <h4 class="font-semibold">Square</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+    return (
+      <Box>
+        <Paper sx={{ p: 3, mb: 3, maxWidth: 600, mx: 'auto' }}>
+          <Stack spacing={2}>
+            <TextField
+              label="Filter Trucks"
+              placeholder="Truck name or part of name..."
+              value={filter}
+              onChange={e => setFilter(e.target.value)}
+              size="small"
+              fullWidth
+            />
+            <FormControl fullWidth size="small">
+              <InputLabel>Select Truck</InputLabel>
+                <Select
+                  value={selectedTruck}
+                  label="Select Truck"
+                  onChange={e => setSelectedTruck(e.target.value)}
+                >
+                  <MenuItem value=""><em>Select a truck</em></MenuItem>
+                  <MenuItem value="ALL">All Colors</MenuItem>
+                  {filteredTrucks.map(name => (
+                    <MenuItem key={name} value={name}>{name}</MenuItem>
+                  ))}
+                </Select>
+            </FormControl>
+          </Stack>
+        </Paper>
 
-<div id="colorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 overflow-y-auto">
-  <div class="min-h-screen px-4 py-6 flex items-center justify-center">
-    <div class="bg-white rounded-lg p-6 w-full max-w-6xl relative">
-      <button id="closeModal"
-              class="absolute top-4 right-4 p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
-        x
-      </button>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 2 }}>
+          {colorSchemes.map((scheme, idx) => (
+            <ColorCard key={idx} scheme={scheme} onLoad={onLoadColors} />
+          ))}
+        </Box>
+      </Box>
+    );
+  }
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div class="space-y-4">
-          <h3 class="font-bold text-lg">Primary Color</h3>
-          <div id="color1Preview" class="h-24 rounded-lg cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-               data-color-index="0"></div>
-          <div id="color1Info" class="text-sm text-gray-600"></div>
-        </div>
-        <div class="space-y-4">
-          <h3 class="font-bold text-lg">Secondary Color</h3>
-          <div id="color2Preview" class="h-24 rounded-lg cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-               data-color-index="1"></div>
-          <div id="color2Info" class="text-sm text-gray-600"></div>
-        </div>
-        <div class="space-y-4">
-          <h3 class="font-bold text-lg">Tertiary Color</h3>
-          <div id="color3Preview" class="h-24 rounded-lg cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-               data-color-index="2"></div>
-          <div id="color3Info" class="text-sm text-gray-600"></div>
-        </div>
-      </div>
+  // ── ColorConverterTab ─────────────────────────────────────
+  function ColorConverterTab({ addToast }) {
+    const [hex, setHex] = React.useState('');
+    const [result, setResult] = React.useState(null);
+    const [error, setError] = React.useState('');
 
-      <!-- Harmonies Section -->
-      <div class="space-y-6">
-        <div class="flex items-center gap-2">
-          <h3 class="font-bold text-lg">Color Harmonies</h3>
-          <span id="selectedColorType" class="text-sm text-gray-600">(Primary Color)</span>
-        </div>
+    const handleChange = e => {
+      const val = e.target.value;
+      setHex(val);
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        try {
+          setResult(ColorConverter.hexToHsb(val));
+          setError('');
+        } catch (err) {
+          setResult(null);
+          setError(err.message);
+        }
+      } else {
+        setResult(null);
+        setError(val.length > 1 ? 'Enter a valid 6-digit hex code' : '');
+      }
+    };
 
-        <div class="space-y-8">
-          <div id="analogousHarmonies" class="space-y-4">
-            <h4 class="font-semibold">Analogous</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+    const handleCopy = async () => {
+      if (!result) return;
 
-          <div id="triadicHarmonies" class="space-y-4">
-            <h4 class="font-semibold">Triadic</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+      try {
+        await HsbClipboard.copy(result);
+        addToast(Constants.hsbCopied, 'success');
+      } catch {
+        addToast(Constants.hsbCopiedError, 'error');
+      }
+    };
 
-          <div id="complementaryHarmonies" class="space-y-4">
-            <h4 class="font-semibold">Complementary</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+    return (
+      <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto' }}>
+        <Typography variant="h6" textAlign="center" gutterBottom>CSS Hex to SnowRunner HSB</Typography>
+        <Stack spacing={3}>
+          <TextField
+            label="CSS Hex Code"
+            placeholder="#000000"
+            value={hex}
+            onChange={handleChange}
+            error={Boolean(error)}
+            helperText={error || ' '}
+            fullWidth
+          />
+          <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1, fontFamily: 'monospace', fontSize: 14 }}>
+            {result
+              ? `Hue: ${result.hue}, Saturation: ${result.saturation}, Brightness: ${result.brightness}`
+              : 'Hue: N/A, Saturation: N/A, Brightness: N/A'}
+          </Box>
+          <Box sx={{ textAlign: 'center' }}>
+            <Button variant="contained" onClick={handleCopy} disabled={!result}>
+              Copy HSB
+            </Button>
+          </Box>
+        </Stack>
+      </Paper>
+    );
+  }
 
-          <div id="splitComplementaryHarmonies" class="space-y-4">
-            <h4 class="font-semibold">Split Complementary</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
+  // ── App ───────────────────────────────────────────────────
+  function App() {
+    const [tab, setTab] = React.useState(0);
+    const [editorColors, setEditorColors] = React.useState([
+      { hue: 180, saturation: 50, brightness: 50 },
+      { hue: 180, saturation: 50, brightness: 50 },
+      { hue: 180, saturation: 50, brightness: 50 },
+    ]);
+    const [toasts, setToasts] = React.useState([]);
 
-          <div id="squareHarmonies" class="space-y-4">
-            <h4 class="font-semibold">Square</h4>
-            <div class="flex gap-4 flex-wrap"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+    const addToast = (message, severity = 'info') => {
+      const id = Date.now() + Math.random();
+      setToasts(prev => [...prev, { id, message, severity }]);
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+    };
 
-<div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+    const handleLoadColors = scheme => {
+      const colorValues = Object.values(scheme.colors).slice(0, 3);
+      setEditorColors(colorValues.map(c => ({ ...c.hsb })));
+      setTab(1);
+    };
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    EditorController.init();
-    ExplorerController.init();
-    ContextMenuController.init();
-    Toast.init();
-    TabController.init();
-  });
+    const COLOR_EXPLORER_TAB = 0;
+    const COLOR_EDITOR_TAB = 1;
+    const COLOR_CONVERTER_TAB = 2;
+
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AppBar position="static" elevation={1}>
+          <Toolbar>
+            <Typography variant="h6">SnowRunner Color Tool</Typography>
+          </Toolbar>
+        </AppBar>
+        <Container maxWidth="xl" sx={{ py: 3 }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+              <Tab label="Color Explorer" />
+              <Tab label="Color Editor" />
+              <Tab label="Color Converter" />
+            </Tabs>
+          </Box>
+          {tab === COLOR_EXPLORER_TAB && <ColorExplorer onLoadColors={handleLoadColors} />}
+          {tab === COLOR_EDITOR_TAB && <ColorEditor colors={editorColors} onChange={setEditorColors} addToast={addToast} />}
+          {tab === COLOR_CONVERTER_TAB && <ColorConverterTab addToast={addToast} />}
+        </Container>
+        <Box sx={{ position: 'fixed', top: 70, right: 16, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {toasts.map(t => (
+            <Alert key={t.id} severity={t.severity} variant="filled" sx={{ boxShadow: 3 }}>
+              {t.message}
+            </Alert>
+          ))}
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
 </html>

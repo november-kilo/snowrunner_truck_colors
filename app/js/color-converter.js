@@ -16,16 +16,11 @@ const ColorConverter = {
     let x = c * (1 - Math.abs((h / 60) % 2 - 1));
     let m = b - c / 2;
 
-    let r, g, b1;
-    const hi = Math.floor(h / 60) % 6;
-    switch (hi) {
-      case 0: [r, g, b1] = [c, x, 0]; break;
-      case 1: [r, g, b1] = [x, c, 0]; break;
-      case 2: [r, g, b1] = [0, c, x]; break;
-      case 3: [r, g, b1] = [0, x, c]; break;
-      case 4: [r, g, b1] = [x, 0, c]; break;
-      case 5: [r, g, b1] = [c, 0, x]; break;
-    }
+    const sectors = [
+      [c, x, 0], [x, c, 0], [0, c, x],
+      [0, x, c], [x, 0, c], [c, 0, x],
+    ];
+    const [r, g, b1] = sectors[Math.floor(h / 60) % 6];
 
     return [
       Math.round((r + m) * 255),
@@ -40,5 +35,42 @@ const ColorConverter = {
 
   snowRunnerFormat(r, g, b) {
     return `SnowRunner: g(${r}; ${g}; ${b})`;
+  },
+
+  getHueFromRGB(delta, max, r, g, b) {
+    if (delta === 0) {
+      return 0;
+    }
+
+    const raw = max === r
+      ? ((g - b) / delta) % 6
+      : max === g
+        ? (b - r) / delta + 2
+        : (r - g) / delta + 4;
+
+    return (Math.round(raw * 60) + 360) % 360;
+  },
+
+  hexToHsb(hex) {
+    hex = hex.replace('#', '');
+
+    if (!/^([0-9a-fA-F]{6})$/.test(hex)) {
+      throw new Error('Invalid HEX Color');
+    }
+
+    const r = parseInt(hex.substring(0, 2), 16) / 255;
+    const g = parseInt(hex.substring(2, 4), 16) / 255;
+    const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const delta = max - min;
+
+    const h = this.getHueFromRGB(delta, max, r, g, b);
+    const l = (max + min) / 2;
+    const s = delta === 0 ? 0 : (delta / (1 - Math.abs(2 * l - 1))) * 100;
+    const bValue = l * 100;
+
+    return this.normalizeHSB(h, s, bValue);
   }
 };

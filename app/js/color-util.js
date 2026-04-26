@@ -1,45 +1,25 @@
+const areColorsEqual = (c1, c2) => c1.hex === c2.hex;
+
+const getSchemePairs = (colors, requireAdjacency) => {
+  const [t1, t2, t3] = colors;
+
+  return requireAdjacency ? [[t1, t2], [t2, t3]] : [[t1, t2], [t2, t3], [t1, t3]];
+};
+
+const classifyEquality = (matched, total) =>
+  matched === total ? 'allEqual' : matched > 0 ? 'someEqual' : 'noneEqual';
+
+const classifyScheme = (scheme, requireAdjacency) => {
+  const pairs = getSchemePairs(Object.values(scheme.colors), requireAdjacency);
+  const matched = pairs.filter(([a, b]) => areColorsEqual(a, b)).length;
+
+  return classifyEquality(matched, pairs.length);
+};
+
 function categorizeColorSchemes(colorSchemes, requireAdjacency = false) {
-  const areColorsEqual = (color1, color2) => color1.hex === color2.hex;
+  const groups = { allEqual: [], someEqual: [], noneEqual: [] };
 
-  function analyzeColorScheme(scheme) {
-    const colors = Object.values(scheme.colors);
-    const [tint1, tint2, tint3] = colors;
+  colorSchemes.forEach(scheme => groups[classifyScheme(scheme, requireAdjacency)].push(scheme));
 
-    if (areColorsEqual(tint1, tint2) && areColorsEqual(tint2, tint3)) {
-      return 'allEqual';
-    }
-
-    if (requireAdjacency) {
-      if (areColorsEqual(tint1, tint2) || areColorsEqual(tint2, tint3)) {
-        return 'someEqual';
-      }
-
-      return 'noneEqual';
-    } else {
-      if (areColorsEqual(tint1, tint2) ||
-        areColorsEqual(tint2, tint3) ||
-        areColorsEqual(tint1, tint3)) {
-        return 'someEqual';
-      }
-    }
-
-    return 'noneEqual';
-  }
-
-  const categorized = {
-    allEqual: [],
-    someEqual: [],
-    noneEqual: [],
-  };
-
-  colorSchemes.forEach(scheme => {
-    const category = analyzeColorScheme(scheme);
-    categorized[category].push(scheme);
-  });
-
-  return [
-    ...categorized.allEqual,
-    ...categorized.someEqual,
-    ...categorized.noneEqual
-  ];
+  return [...groups.allEqual, ...groups.someEqual, ...groups.noneEqual];
 }
