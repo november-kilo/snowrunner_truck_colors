@@ -69,7 +69,7 @@ const ColorDescriptor = {
       { threshold: 101, name: "white" }
     ];
 
-    return shades.find(shade => brightness < shade.threshold)?.name || "white";
+    return shades.find((shade) => brightness < shade.threshold)?.name || "white";
   },
 
   _checkExtremeBrightness({ brightness, saturation }) {
@@ -180,7 +180,7 @@ const ColorConverter = {
   snowRunnerToRgb(snowRunnerColor) {
     const matches = snowRunnerColor.match(/g\((\d+);\s*(\d+);\s*(\d+)\)/);
     if (!matches) return [0, 0, 0];
-    return matches.slice(1).map(n => parseInt(n));
+    return matches.slice(1).map((n) => parseInt(n));
   }
 };
 

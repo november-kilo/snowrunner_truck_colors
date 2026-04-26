@@ -19,7 +19,7 @@ const classifyScheme = (scheme, requireAdjacency) => {
 function categorizeColorSchemes(colorSchemes, requireAdjacency = false) {
   const groups = { allEqual: [], someEqual: [], noneEqual: [] };
 
-  colorSchemes.forEach(scheme => groups[classifyScheme(scheme, requireAdjacency)].push(scheme));
+  colorSchemes.forEach((scheme) => groups[classifyScheme(scheme, requireAdjacency)].push(scheme));
 
   return [...groups.allEqual, ...groups.someEqual, ...groups.noneEqual];
 }

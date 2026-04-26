@@ -121,7 +121,7 @@
         <TextField
           type="number"
           value={color[controlKey]}
-          onChange={e => onChange({...color, [controlKey]: Math.min(max, Math.max(min, Number(e.target.value)))})}
+          onChange={(e) => onChange({...color, [controlKey]: Math.min(max, Math.max(min, Number(e.target.value)))})}
           inputProps={{min, max}}
           size="small"
           sx={{width: 72}}
@@ -177,14 +177,14 @@
           <ColorSliders
             label={labels[idx]}
             color={color}
-            onChange={updated => {
+            onChange={(updated) => {
               const next = [...colors];
               next[idx] = updated;
               onChange(next);
             }}
             isActive={activeColor === idx}
             onActivate={() => setActiveColor(idx)}
-            onContextMenu={e => {
+            onContextMenu={(e) => {
               e.preventDefault();
               setContextMenu({x: e.clientX, y: e.clientY, colorIdx: idx});
             }}
@@ -274,7 +274,7 @@
             hue={colors[activeColor].hue}
             saturation={colors[activeColor].saturation}
             brightness={colors[activeColor].brightness}
-            onSwatchClick={async hsb => {
+            onSwatchClick={async (hsb) => {
               await HsbClipboard.copy(hsb);
               addToast(Constants.hsbCopied, 'success');
             }}
@@ -318,7 +318,7 @@
     const [selectedTruck, setSelectedTruck] = React.useState('');
 
     const filteredTrucks = React.useMemo(() =>
-        truckNames.filter(n => n.toLowerCase().includes(filter.toLowerCase())),
+        truckNames.filter((n) => n.toLowerCase().includes(filter.toLowerCase())),
       [filter]
     );
 
@@ -326,13 +326,13 @@
       if (!selectedTruck) return [];
       if (selectedTruck === 'ALL') {
         const seen = new Map();
-        truckColors.forEach(s => {
-          const key = Object.values(s.colors).map(c => c.hex).sort().join('|');
+        truckColors.forEach((s) => {
+          const key = Object.values(s.colors).map((c) => c.hex).sort().join('|');
           if (!seen.has(key)) seen.set(key, s);
         });
         return categorizeColorSchemes(Array.from(seen.values()), true);
       }
-      const schemes = truckColors.filter(s => s.trucks.includes(selectedTruck) || s.trucks.includes('All'));
+      const schemes = truckColors.filter((s) => s.trucks.includes(selectedTruck) || s.trucks.includes('All'));
       return categorizeColorSchemes(schemes, true);
     }, [selectedTruck]);
 
@@ -344,7 +344,7 @@
               label="Filter Trucks"
               placeholder="Truck name or part of name..."
               value={filter}
-              onChange={e => setFilter(e.target.value)}
+              onChange={(e) => setFilter(e.target.value)}
               size="small"
               fullWidth
             />
@@ -353,11 +353,11 @@
                 <Select
                   value={selectedTruck}
                   label="Select Truck"
-                  onChange={e => setSelectedTruck(e.target.value)}
+                  onChange={(e) => setSelectedTruck(e.target.value)}
                 >
                   <MenuItem value=""><em>Select a truck</em></MenuItem>
                   <MenuItem value="ALL">All Colors</MenuItem>
-                  {filteredTrucks.map(name => (
+                  {filteredTrucks.map((name) => (
                     <MenuItem key={name} value={name}>{name}</MenuItem>
                   ))}
                 </Select>
@@ -379,7 +379,7 @@
     const [result, setResult] = React.useState(null);
     const [error, setError] = React.useState('');
 
-    const handleChange = e => {
+    const handleChange = (e) => {
       const val = e.target.value;
       setHex(val);
       if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
@@ -447,12 +447,12 @@
     const addToast = (message, severity = 'info') => {
       const id = Date.now() + Math.random();
       setToasts(prev => [...prev, { id, message, severity }]);
-      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+      setTimeout(() => setToasts((prev) => prev.filter(t => t.id !== id)), 3500);
     };
 
-    const handleLoadColors = scheme => {
+    const handleLoadColors = (scheme) => {
       const colorValues = Object.values(scheme.colors).slice(0, 3);
-      setEditorColors(colorValues.map(c => ({ ...c.hsb })));
+      setEditorColors(colorValues.map((c) => ({ ...c.hsb })));
       setTab(1);
     };
 
@@ -481,7 +481,7 @@
           {tab === COLOR_CONVERTER_TAB && <ColorConverterTab addToast={addToast} />}
         </Container>
         <Box sx={{ position: 'fixed', top: 70, right: 16, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {toasts.map(t => (
+          {toasts.map((t) => (
             <Alert key={t.id} severity={t.severity} variant="filled" sx={{ boxShadow: 3 }}>
               {t.message}
             </Alert>

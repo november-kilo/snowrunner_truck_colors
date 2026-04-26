@@ -1,113 +1,93 @@
+const THRESHOLDS = {
+  grayscaleSaturation: 5,
+  lowBrightness: 15,
+  highBrightness: 85,
+  lowSaturation: 25,
+  highSaturation: 75,
+  lowBrightnessModifier: 30,
+  highBrightnessModifier: 65,
+};
+
+const COLOR_RANGES = [
+  { name: 'red',     test: (h) => h >= 350 || h < 10  },
+  { name: 'orange',  test: (h) => h >= 10  && h < 40  },
+  { name: 'yellow',  test: (h) => h >= 40  && h < 70  },
+  { name: 'green',   test: (h) => h >= 70  && h < 160 },
+  { name: 'cyan',    test: (h) => h >= 160 && h < 200 },
+  { name: 'blue',    test: (h) => h >= 200 && h < 260 },
+  { name: 'purple',  test: (h) => h >= 260 && h < 290 },
+  { name: 'magenta', test: (h) => h >= 290 && h < 350 },
+];
+
+const isGrayscale = (saturation) => saturation < THRESHOLDS.grayscaleSaturation;
+
+const getGrayscaleName = brightness => {
+  const shades = [
+    { threshold: 15,  name: 'black'      },
+    { threshold: 35,  name: 'dark gray'  },
+    { threshold: 65,  name: 'gray'       },
+    { threshold: 85,  name: 'light gray' },
+    { threshold: 101, name: 'white'      },
+  ];
+
+  return shades.find((s) => brightness < s.threshold)?.name ?? 'white';
+};
+
+const isLowBrightness = (brightness) => brightness < THRESHOLDS.lowBrightness;
+const isHighBrightness = (brightness, saturation) =>
+  brightness > THRESHOLDS.highBrightness && saturation < THRESHOLDS.lowSaturation;
+
+const getExtremeName = (brightness, saturation) => {
+  if (isLowBrightness(brightness)) {
+    return 'black';
+  }
+
+  if (isHighBrightness(brightness, saturation)) {
+    return 'white';
+  }
+
+  return null;
+};
+
+const getBaseColorName = (hue) => COLOR_RANGES.find(r => r.test(hue))?.name ?? 'red';
+const isPale = (saturation) => saturation < THRESHOLDS.lowSaturation;
+const isVivid = (saturation) => saturation > THRESHOLDS.highSaturation;
+const isDark = (brightness) => brightness < THRESHOLDS.lowBrightnessModifier;
+const isBright = (brightness) => brightness > THRESHOLDS.highBrightnessModifier;
+
+const getModifier = (saturation, brightness) => {
+  if (isPale(saturation)) {
+    return 'pale ';
+  }
+
+  if (isVivid(saturation)) {
+    return 'vivid ';
+  }
+
+  if (isDark(brightness)) {
+    return 'dark ';
+  }
+
+  if (isBright(brightness)) {
+    return 'bright ';
+  }
+
+  return '';
+};
+
 const ColorDescriptor = {
-  thresholds: {
-    grayscaleSaturation: 5,
-    lowBrightness: 15,
-    highBrightness: 85,
-    lowSaturation: 25,
-    highSaturation: 75,
-    lowBrightnessModifier: 30,
-    highBrightnessModifier: 65
-  },
-
-  colorRanges: {
-    RED: { min: 350, max: 10 },
-    ORANGE: { min: 10, max: 40 },
-    YELLOW: { min: 40, max: 70 },
-    GREEN: { min: 70, max: 160 },
-    CYAN: { min: 160, max: 200 },
-    BLUE: { min: 200, max: 260 },
-    PURPLE: { min: 260, max: 290 },
-    MAGENTA: { min: 290, max: 350 }
-  },
-
   describe(hue, saturation, brightness) {
-    const color = ColorConverter.normalizeHSB(hue, saturation, brightness);
+    const { hue: h, saturation: s, brightness: b } = ColorConverter.normalizeHSB(hue, saturation, brightness);
 
-    const grayscale = this._checkGrayscale(color);
-    if (grayscale) {
-      return grayscale;
+    if (isGrayscale(s)) {
+      return getGrayscaleName(b);
     }
 
-    const extreme = this._checkExtremeBrightness(color);
+    const extreme = getExtremeName(b, s);
     if (extreme) {
       return extreme;
     }
 
-    const baseColor = this._getBaseColor(color.hue);
-    const modifier = this._getVividness(color) || this._getIntensity(color);
-
-    return `${modifier}${baseColor}`.trim();
+    return `${getModifier(s, b)}${getBaseColorName(h)}`.trim();
   },
-
-  _checkGrayscale({ saturation, brightness }) {
-    if (saturation >= this.thresholds.grayscaleSaturation) {
-      return null;
-    }
-
-    const shades = [
-      { threshold: 15, name: "black" },
-      { threshold: 35, name: "dark gray" },
-      { threshold: 65, name: "gray" },
-      { threshold: 85, name: "light gray" },
-      { threshold: 101, name: "white" }
-    ];
-
-    return shades.find(shade => brightness < shade.threshold)?.name || "white";
-  },
-
-  _checkExtremeBrightness({ brightness, saturation }) {
-    const t = this.thresholds;
-
-    if (brightness < t.lowBrightness) {
-      return "black";
-    }
-
-    if (brightness > t.highBrightness && saturation < t.lowSaturation) {
-      return "white";
-    }
-
-    return null;
-  },
-
-  _getBaseColor(hue) {
-    for (const [color, range] of Object.entries(this.colorRanges)) {
-      if (color === 'RED' && (hue >= range.min || hue < range.max)) {
-        return "red";
-      }
-
-      if (hue >= range.min && hue < range.max) {
-        return color.toLowerCase();
-      }
-    }
-
-    return "red";
-  },
-
-  _getIntensity({ brightness }) {
-    const t = this.thresholds;
-
-    if (brightness < t.lowBrightnessModifier) {
-      return "dark ";
-    }
-
-    if (brightness > t.highBrightnessModifier) {
-      return "bright ";
-    }
-
-    return "";
-  },
-
-  _getVividness({ saturation }) {
-    const t = this.thresholds;
-
-    if (saturation < t.lowSaturation) {
-      return "pale ";
-    }
-
-    if (saturation > t.highSaturation) {
-      return "vivid ";
-    }
-
-    return "";
-  }
 };

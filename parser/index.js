@@ -3,7 +3,7 @@ const xml2js = require('xml2js');
 const { ColorConverter, ColorDescriptor, ColorHarmony } = require('./util.js');
 
 function postProcessTruckColors(truckColors, truckNames) {
-  return truckColors.map(entry => {
+  return truckColors.map((entry) => {
     entry.trucks.sort((a, b) => a.localeCompare(b));
 
     const hasSameTrucks = truckNames.length === entry.trucks.length &&
